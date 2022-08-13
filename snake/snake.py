@@ -6,7 +6,8 @@ import json
 import copy
 
 
-class Game():
+class Game:
+
 	def __init__(self):
 		self.red = (200,0,0)
 		self.white = (255,255,255)
@@ -15,11 +16,12 @@ class Game():
 		self.grey = (40,40,40)
 		self.menu_grey = (20,20,20)
 
-		self.sc_width = 500
-		self.sc_height = 500
-		self.score = 0
+		self.sc_width = 600
+		self.sc_height = 600
 
+		self.score = 0
 		self.start = False
+		self.coef = 50
 
 		self.sc = pygame.display.set_mode((self.sc_width,self.sc_height+50))
 
@@ -99,10 +101,12 @@ class Game():
 
 
 class Snake:
-	def __init__(self,snake_color):
+
+	def __init__(self,snake_color, coef, sc_width, sc_height):
 		self.color = snake_color
-		self.snake_head_pos = [250,120]
-		self.snake_body = [[250,120],[260,120],[270,120]]
+
+		self.snake_body = [[sc_width - coef*i, sc_height//2] for i in range(2,-1, -1)]
+		self.snake_head_pos = list(self.snake_body[0])
 
 		self.base_snake_pos = copy.deepcopy(self.snake_body)
 
@@ -119,40 +123,40 @@ class Snake:
 			self.direction = self.change_to
 
 
-	def change_head_pos(self):
+	def change_head_pos(self, coef, sc_width, sc_height):
 		if self.direction == 'right':
-			self.snake_head_pos[0] += 10
+			self.snake_head_pos[0] += coef*(sc_width/coef//2)
 		elif self.direction == 'left':
-			self.snake_head_pos[0] -= 10
+			self.snake_head_pos[0] -= coef*(sc_width/coef//2)
 		elif self.direction == 'up':
-			self.snake_head_pos[1] -= 10
+			self.snake_head_pos[1] -= coef*(sc_height/coef//2)
 		elif self.direction == 'down':
-			self.snake_head_pos[1] += 10
+			self.snake_head_pos[1] += coef*(sc_height/coef//2)
 
 
-	def body_mechanism(self,sc_width, sc_height, food_pos,score):
+	def body_mechanism(self,sc_width, sc_height, food_pos,score, coef):
 		self.snake_body.insert(0,list(self.snake_head_pos))
 
 		if (self.snake_head_pos[0] == food_pos[0] and self.snake_head_pos[1] == food_pos[1]):
 			score +=1
-			food_pos = [random.randrange(1,sc_width/10)*10,random.randrange(1,sc_height/10)*10]
+			food_pos = [random.randrange(1,sc_width/coef)*coef,random.randrange(1,sc_height/coef)*coef]
 		else:
 			self.snake_body.pop()
 
 		return score, food_pos
 
 
-	def snake_draw(self,play_surface, play_surface_color):
+	def snake_draw(self,play_surface, play_surface_color, coef):
 		play_surface.fill(play_surface_color)
 		for block in self.snake_body:
-			pygame.draw.rect(play_surface, self.color,(block[0],block[1],10,10))
+			pygame.draw.rect(play_surface, self.color,(block[0],block[1],coef,coef))
 
 
-	def check_for_boundaries(self,game_over,sc_width,sc_height):
+	def check_for_boundaries(self,game_over,sc_width,sc_height, coef):
 		if any((
-			self.snake_head_pos[0] > sc_width-10
+			self.snake_head_pos[0] > sc_width-coef
 			or self.snake_head_pos[0] < 0,
-			self.snake_head_pos[1] > sc_height-10
+			self.snake_head_pos[1] > sc_height-coef
 			or self.snake_head_pos[1] < 0
 				)):
 
@@ -178,19 +182,19 @@ class Snake:
 
 
 class Food:
-	def __init__(self,sc_width,sc_height):
-		self.sc_width = sc_width
-		self.sc_height = sc_height
 
-		self.food_pos = [random.randrange(1,sc_width/10)*10,random.randrange(1,sc_height/10)*10]
+	def __init__(self,sc_width,sc_height, coef):
+
+		self.food_pos = [random.randrange(1,sc_width/coef)*coef,random.randrange(1,sc_height/coef)*coef]
 
 
-	def food_draw(self,play_surface,food_color):
-		pygame.draw.rect(play_surface,food_color,(self.food_pos[0],self.food_pos[1],10,10))
+	def food_draw(self,play_surface,food_color, coef):
+		pygame.draw.rect(play_surface,food_color,(self.food_pos[0],self.food_pos[1],coef,coef))
 
 
 
 class Menu:
+
 	def __init__(self):
 		self.win_size = [pygame.display.get_surface().get_size()[0],pygame.display.get_surface().get_size()[1]]
 		self.main_menu = pygame.Surface((self.win_size[0],self.win_size[1]))
@@ -201,7 +205,7 @@ class Menu:
 		self.text_color = (255,255,255)
 		self.title_color = (0,150,0)
 
-		self.all_btn_color=[self.light_grey,self.light_grey,self.light_grey]
+		self.all_btn_color=[self.light_grey]*2
 
 
 	def initialization_menu(self):
@@ -215,6 +219,7 @@ class Menu:
 		self.exit_game = self.exit_game.render('Exit',1,self.text_color)
 
 		self.all_fields = [self.start_game,self.exit_game]
+		self.select_menu_pos = 0
 
 
 	def draw_items(self,play_surface,get_score):
@@ -230,40 +235,39 @@ class Menu:
 		play_surface.blit(self.title,(self.win_size[0]//2 - self.title.get_rect()[2]//2,self.win_size[1]*0.1))
 
 		play_surface.blit(self.score_game,(self.win_size[0]*0.1,self.win_size[1]*0.9))
-		play_surface.blit(self.last_score_game,(self.win_size[0] - self.win_size[0]*0.1 - self.last_score_game.get_rect()[2],self.win_size[1]*0.9))
+		play_surface.blit(self.last_score_game,(self.win_size[0] - self.win_size[0]*0.1 - \
+			self.last_score_game.get_rect()[2],self.win_size[1]*0.9))
 
 		for i in range(len(self.all_fields)):
-			pygame.draw.rect(play_surface,self.all_btn_color[i],[self.win_size[0]*0.25,self.win_size[1]*0.3*(i+1)-30*i,self.win_size[0]//2,self.win_size[1]//6])
+			pygame.draw.rect(play_surface,self.all_btn_color[i],[self.win_size[0]*0.25,self.win_size[1]*0.3*(i+1)-30*i,
+				self.win_size[0]//2,self.win_size[1]//6])
+			play_surface.blit(self.all_fields[i],(self.win_size[0]*0.25+(self.win_size[0]//2 - \
+			self.all_fields[i].get_rect()[2])/2,(self.win_size[1]*0.3*(i+1))- 30*i + \
+			(self.win_size[1]//6 - self.all_fields[i].get_rect()[3])/2))
 
-		for j in range(len(self.all_fields)):
-			play_surface.blit(self.all_fields[j],(self.win_size[0]*0.25+(self.win_size[0]//2 - self.all_fields[j].get_rect()[2])/2,(self.win_size[1]*0.3*(j+1))- 30*j + (self.win_size[1]//6 - self.all_fields[j].get_rect()[3])/2))
 
-
-	def check_key(self,get_score):
+	def check_key(self):
 		for i in pygame.event.get():
 			if i.type == pygame.QUIT:
 				sys.exit()
+			elif i.type == pygame.KEYDOWN:
+				if i.key == pygame.K_w or i.key == pygame.K_s:
+					self.select_menu_pos ^= 1
 
 
 	def keys_animation(self):
-		pos = pygame.mouse.get_pos()
-
-		for i in range(len(self.all_fields)):
-			if (self.win_size[0]*0.25 <= pos[0] <= self.win_size[0]*0.25 + self.win_size[0]//2) and (self.win_size[1]*0.3*(i+1)-30*i <= pos[1] <= self.win_size[1]*0.3*(i+1)-30*i + self.win_size[1]//6):
-				self.all_btn_color[i] = self.dark_grey_light
-			else:
-				self.all_btn_color[i] = self.light_grey
+		self.all_btn_color[self.select_menu_pos] = self.dark_grey_light
+		self.all_btn_color[self.select_menu_pos-1] = self.light_grey
 
 
-	def begin_game(self,start,get_score,sc_width,sc_height,food_pos):
-		mouse = pygame.mouse.get_pressed()
-		pos = pygame.mouse.get_pos()
-		if start == False and mouse[0]:
-			if (self.win_size[0]*0.25 <= pos[0] <= self.win_size[0]*0.25 + self.win_size[0]//2) and (self.win_size[1]*0.3 <= pos[1] <= self.win_size[1]*0.3 + self.win_size[1]//6):
+	def begin_game(self,start,sc_width,sc_height,food_pos, coef):
+		k = pygame.key.get_pressed()
+
+		if start == False and (k[pygame.K_RETURN] or k[pygame.K_a] or k[pygame.K_d]):
+			if self.select_menu_pos == 0:
 				start = True
-				food_pos = [random.randrange(1,sc_width/10)*10,random.randrange(1,sc_height/10)*10]
-
-			elif (self.win_size[0]*0.25 <= pos[0] <= self.win_size[0]*0.25 + self.win_size[0]//2) and (self.win_size[1]*0.3*2-30 <= pos[1] <= self.win_size[1]*0.3*2-30 + self.win_size[1]//6):
+				food_pos = [random.randrange(1,sc_width/coef)*coef,random.randrange(1,sc_height/coef)*coef]
+			else:
 				sys.exit()
 
 		return start,food_pos
@@ -271,8 +275,8 @@ class Menu:
 
 
 game = Game()
-snake = Snake(game.white)
-food = Food(game.sc_width,game.sc_height)
+snake = Snake(game.white, game.coef, game.sc_width, game.sc_height)
+food = Food(game.sc_width,game.sc_height, game.coef)
 menu = Menu()
 
 game.initialization()
@@ -284,22 +288,22 @@ while True:
 		menu.draw_items(game.sc,game.get_score)
 		menu.keys_animation()
 
-		menu.check_key(game.get_score)
+		menu.check_key()
 
-		game.start,food.food_pos = menu.begin_game(game.start,game.get_score,game.sc_width,game.sc_height,food.food_pos)
+		game.start,food.food_pos = menu.begin_game(game.start,game.sc_width,game.sc_height,food.food_pos, game.coef)
 
 
 	elif game.start == True:
 		snake.change_to = game.check_key(snake.change_to)
 
 		snake.change_direction()
-		snake.change_head_pos()
+		snake.change_head_pos(game.coef, game.sc_width, game.sc_height)
 
-		game.score, food.food_pos = snake.body_mechanism(game.sc_width,game.sc_height,food.food_pos,game.score)
+		game.score, food.food_pos = snake.body_mechanism(game.sc_width,game.sc_height,food.food_pos,game.score, game.coef)
 
-		snake.snake_draw(game.sc,game.black)
-		food.food_draw(game.sc,game.red)
-		snake.check_for_boundaries(game.game_over,game.sc_width,game.sc_height),
+		snake.snake_draw(game.sc,game.black, game.coef)
+		food.food_draw(game.sc,game.red, game.coef)
+		snake.check_for_boundaries(game.game_over,game.sc_width,game.sc_height, game.coef),
 
 		game.score_draw()
 
