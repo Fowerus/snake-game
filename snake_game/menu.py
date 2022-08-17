@@ -15,7 +15,7 @@ class Menu:
 		self.text_color = (255,255,255)
 		self.title_color = (0,150,0)
 
-		self.all_btn_color=[self.light_grey]*2
+		self.all_btn_color=[self.light_grey]*3
 
 
 	def initialization_menu(self):
@@ -25,14 +25,19 @@ class Menu:
 		self.start_game = pygame.font.SysFont('arial',40)
 		self.start_game = self.start_game.render('Start',1,self.text_color)
 
+		self.settings_game = pygame.font.SysFont('arial', 40)
+		self.settings_game = self.settings_game.render('Settings', 1, self.text_color)
+
 		self.exit_game = pygame.font.SysFont('arial',40)
 		self.exit_game = self.exit_game.render('Exit',1,self.text_color)
 
-		self.all_fields = [self.start_game,self.exit_game]
+		self.all_fields = [self.start_game, self.settings_game, self.exit_game]
 		self.select_menu_pos = 0
 
 
 	def draw_items(self,play_surface,get_score):
+		self.resize_coef = self.win_size[0] / 2400
+
 		self.score_game = pygame.font.SysFont('arial',20)
 		self.score_game = self.score_game.render(f'Maximum score | {get_score(0)["m_score"]}',1,self.text_color)
 
@@ -49,10 +54,11 @@ class Menu:
 			self.last_score_game.get_rect()[2],self.win_size[1]*0.9))
 
 		for i in range(len(self.all_fields)):
-			pygame.draw.rect(play_surface,self.all_btn_color[i],[self.win_size[0]*0.25,self.win_size[1]*0.3*(i+1)-30*i,
-				self.win_size[0]//2,self.win_size[1]//6])
+			pygame.draw.rect(play_surface,self.all_btn_color[i],[self.win_size[0]*0.25,self.win_size[1]*0.25*(i+1)-30*i,
+				self.win_size[0]//2,self.win_size[1]//7])
+
 			play_surface.blit(self.all_fields[i],(self.win_size[0]*0.25+(self.win_size[0]//2 - \
-			self.all_fields[i].get_rect()[2])/2,(self.win_size[1]*0.3*(i+1))- 30*i + \
+			self.all_fields[i].get_rect()[2])/2,(self.win_size[1]*0.25*(i+1))-30*i + \
 			(self.win_size[1]//6 - self.all_fields[i].get_rect()[3])/2))
 
 
@@ -61,13 +67,17 @@ class Menu:
 			if i.type == pygame.QUIT:
 				sys.exit()
 			elif i.type == pygame.KEYDOWN:
-				if i.key == pygame.K_w or i.key == pygame.K_s:
-					self.select_menu_pos ^= 1
-
+				if i.key == pygame.K_w:
+					self.select_menu_pos = (len(self.all_fields) - 1 + abs(self.select_menu_pos)) % len(self.all_fields)
+				elif i.key == pygame.K_s:
+					self.select_menu_pos = (self.select_menu_pos + 1) % len(self.all_fields)
 
 	def keys_animation(self):
-		self.all_btn_color[self.select_menu_pos] = self.dark_grey_light
-		self.all_btn_color[self.select_menu_pos-1] = self.light_grey
+		for i in range(len(self.all_btn_color)):
+			if self.select_menu_pos == i:
+				self.all_btn_color[i] = self.dark_grey_light
+			else:
+				self.all_btn_color[i] = self.light_grey
 
 
 	def begin_game(self,start,sc_width,sc_height,food_pos, coef):

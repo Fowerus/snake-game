@@ -14,12 +14,11 @@ class Game:
 		self.grey = (40,40,40)
 		self.menu_grey = (20,20,20)
 
-		self.sc_width = 600
-		self.sc_height = 600
+		self.sc_width = self.sc_height = 600
 
 		self.score = 0
 		self.start = False
-		self.coef = 50
+		self.coef = 30
 
 		self.sc = pygame.display.set_mode((self.sc_width,self.sc_height+50))
 
