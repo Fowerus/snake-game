@@ -21,7 +21,7 @@ class Start:
 		return self.game.start
 
 
-	def menu(self):
+	def game_menu(self):
 		self.menu.draw_items(self.game.sc, self.game.get_score)
 		self.menu.keys_animation()
 
@@ -55,9 +55,9 @@ class Start:
 
 	def game_desision(self):
 		if self.game_status:
-			return self.menu()
-		elif not self.game_status:
 			return self.snake_game()
+		elif not self.game_status:
+			return self.game_menu()
 
 
 
