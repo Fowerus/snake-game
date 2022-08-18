@@ -10,7 +10,6 @@ class Menu:
         self.menu_bg = (70, 70, 70)
         self.light_grey = (120, 120, 120)
         self.dark_grey_light = (90, 90, 90)
-        self.btn_bg = self.light_grey
         self.text_color = (255, 255, 255)
         self.title_color = (0, 150, 0)
 
@@ -85,7 +84,7 @@ class Menu:
                 start = True
                 food_pos = [random.randrange(1, int(sc_width / coefficient)) * coefficient,
                             random.randrange(1, int(sc_height / coefficient)) * coefficient]
-            else:
+            elif self.select_menu_pos == 2:
                 sys.exit()
 
         return start, food_pos
